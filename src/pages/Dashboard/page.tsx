@@ -9,22 +9,8 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-
-type Playlist = {
-  id: string
-  snippet: {
-    title: string
-    description: string
-    thumbnails?: {
-      default?: {
-        url: string
-      }
-    }
-  }
-  contentDetails: {
-    itemCount: number
-  }
-}
+import { PlaylistCard } from './_components/PlaylistCard'
+import type { Playlist } from './types'
 
 const CHANNEL_ID = import.meta.env.VITE_YOUTUBE_CHANNEL_ID as string
 
@@ -42,7 +28,7 @@ function getCookie(name: string) {
   return null
 }
 
-function Dashboard() {
+function DashboardPage() {
   const token = getCookie('google_access_token')
 
   const playlistsQuery = useQuery<Playlist[], Error>({
@@ -128,20 +114,12 @@ function Dashboard() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {playlistsQuery.data?.map((playlist) => (
-              <Card key={playlist.id} className="border-slate-800 bg-slate-900/70">
-                <CardHeader>
-                  <CardTitle className='text-white'>{playlist.snippet.title}</CardTitle>
-                  <CardDescription>
-                    {playlist.snippet.description || 'No description provided.'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Videos</span>
-                  <Badge className="bg-slate-800 text-slate-100">
-                    {playlist.contentDetails.itemCount}
-                  </Badge>
-                </CardContent>
-              </Card>
+              <PlaylistCard
+                key={playlist.id}
+                playlist={playlist}
+                token={token}
+                channelId={CHANNEL_ID}
+              />
             ))}
           </div>
         )}
@@ -150,4 +128,4 @@ function Dashboard() {
   )
 }
 
-export default Dashboard
+export default DashboardPage
