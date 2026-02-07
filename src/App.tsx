@@ -1,7 +1,14 @@
 import { useEffect } from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import Dashboard from './pages/Dashboard'
-import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string
 
@@ -65,9 +72,18 @@ function Home() {
   }, [navigate])
 
   return (
-    <div>
-      <h1>Welcome to Vocalochart</h1>
-      <button onClick={signInWithGoogle}>Sign in with Google</button>
+    <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center p-6">
+      <Card className="w-full max-w-md border-slate-800 bg-slate-900/70 shadow-xl">
+        <CardHeader>
+          <CardTitle>Welcome to Vocalochart</CardTitle>
+          <CardDescription>Sign in to view your YouTube playlists.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={signInWithGoogle} className="w-full">
+            Sign in with Google
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -88,7 +104,21 @@ function OAuthCallback() {
     navigate('/', { replace: true })
   }, [navigate])
 
-  return null
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center p-6">
+      <Card className="w-full max-w-md border-slate-800 bg-slate-900/70 shadow-xl">
+        <CardHeader>
+          <CardTitle>Signing you in</CardTitle>
+          <CardDescription>Finishing OAuth callback...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+            <div className="h-full w-1/3 bg-slate-200 animate-pulse" />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
 
 function App() {
