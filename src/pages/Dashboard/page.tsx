@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { CreatePlaylistModal } from './_components/CreatePlaylistModal'
 import { PlaylistCard } from './_components/PlaylistCard'
 import type { Playlist } from './types'
 
@@ -71,10 +72,13 @@ function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-10">
-        <header className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-semibold">Dashboard</h1>
-            <Badge className="bg-slate-800 text-slate-100">Playlists</Badge>
+        <header className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-semibold">Dashboard</h1>
+              <Badge className="bg-slate-800 text-slate-100">Playlists</Badge>
+            </div>
+            <CreatePlaylistModal token={token} channelId={CHANNEL_ID} />
           </div>
           <p className="text-slate-400">
             Showing playlists for the configured YouTube channel.
@@ -124,6 +128,7 @@ function DashboardPage() {
           </div>
         )}
       </div>
+
     </div>
   )
 }

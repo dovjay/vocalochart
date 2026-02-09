@@ -8,6 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { RequireAuth } from '@/components/RequireAuth'
+import { getCookie } from '@/lib/auth'
 import Dashboard from './pages/Dashboard/page'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string
@@ -45,20 +47,6 @@ function setCookie(name: string, value: string, maxAgeSeconds: number) {
   }
 
   document.cookie = parts.join('; ')
-}
-
-function getCookie(name: string) {
-  const cookies = document.cookie ? document.cookie.split('; ') : []
-  const encodedName = encodeURIComponent(name)
-
-  for (const cookie of cookies) {
-    const [key, value] = cookie.split('=')
-    if (key === encodedName) {
-      return value ? decodeURIComponent(value) : ''
-    }
-  }
-
-  return null
 }
 
 function Home() {
@@ -126,7 +114,14 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
-      <Route path="/dashboard" element={<Dashboard />} />
+      <Route
+        path="/dashboard"
+        element={
+          <RequireAuth>
+            <Dashboard />
+          </RequireAuth>
+        }
+      />
     </Routes>
   )
 }
