@@ -117,36 +117,50 @@ export function PlaylistCard({ playlist, token, channelId }: PlaylistCardProps) 
 
       const summary: UploadSummary = { added: 0, failed: [] }
       let completed = 0
+      const maxAttempts = 3
 
       for (const item of items) {
-        const response = await fetch(
-          'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails',
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              snippet: {
-                playlistId,
-                position: item.position,
-                resourceId: {
-                  kind: 'youtube#video',
-                  videoId: item.videoId,
-                },
-              },
-            }),
-          },
-        )
+        let attempt = 0
+        let lastMessage = 'Failed to add video.'
+        let succeeded = false
 
-        if (!response.ok) {
+        while (attempt < maxAttempts && !succeeded) {
+          const response = await fetch(
+            'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails',
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                snippet: {
+                  playlistId,
+                  position: item.position,
+                  resourceId: {
+                    kind: 'youtube#video',
+                    videoId: item.videoId,
+                  },
+                },
+              }),
+            },
+          )
+
+          if (response.ok) {
+            succeeded = true
+            break
+          }
+
           const payload = await response.json().catch(() => null)
-          const message = payload?.error?.message ?? 'Failed to add video.'
-          summary.failed.push({ videoId: item.videoId, message })
+          lastMessage = payload?.error?.message ?? lastMessage
+          attempt += 1
+        }
+
+        if (!succeeded) {
+          summary.failed.push({ videoId: item.videoId, message: lastMessage })
           setUploadLog((prev) => [
             ...prev,
-            { videoId: item.videoId, status: 'failed', message },
+            { videoId: item.videoId, status: 'failed', message: lastMessage },
           ])
           completed += 1
           setUploadCompleted(completed)
