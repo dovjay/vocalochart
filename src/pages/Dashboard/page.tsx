@@ -50,7 +50,7 @@ function DashboardPage() {
       })
 
       const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/playlists?${params.toString()}`,
+        `https://www.googleapis.com/youtube/v3/playlists?${params.toString()}&maxResults=50`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
