@@ -2,7 +2,9 @@ import * as cheerio from 'cheerio'
 
 const BASE_URL = 'https://vocaloard.injpok.tokyo/en/'
 const PAGE_SIZE = Number(process.env.VOCALOARD_PAGE_SIZE || '1')
-const GOOGLE_ACCESS_TOKEN = process.env.GOOGLE_ACCESS_TOKEN
+const GOOGLE_CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_SECRET = process.env.CLIENT_SECRET
+const GOOGLE_REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN
 const DAILY_PLAYLIST_ID = process.env.DAILY_PLAYLIST_ID
 
 function extractLinks(html) {
@@ -82,6 +84,34 @@ async function fetchWithRetry(url, options, maxAttempts = 3) {
   }
 
   throw new Error(lastMessage)
+}
+
+async function refreshAccessToken() {
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      refresh_token: GOOGLE_REFRESH_TOKEN,
+      grant_type: 'refresh_token',
+    }),
+  })
+
+  const payload = await response.json().catch(() => null)
+
+  if (!response.ok) {
+    const message = payload?.error_description ?? payload?.error ?? 'Failed to refresh token.'
+    throw new Error(message)
+  }
+
+  if (!payload?.access_token) {
+    throw new Error('Missing access token in refresh response.')
+  }
+
+  return payload.access_token
 }
 
 async function listPlaylistItems({ playlistId, token }) {
@@ -185,8 +215,8 @@ async function insertPlaylistItem({ playlistId, videoId, position, token }) {
 }
 
 export default async function handler(req, res) {
-  if (!GOOGLE_ACCESS_TOKEN) {
-    res.status(500).json({ error: 'Missing GOOGLE_ACCESS_TOKEN' })
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
+    res.status(500).json({ error: 'Missing Google OAuth configuration.' })
     return
   }
 
@@ -196,6 +226,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    const accessToken = await refreshAccessToken()
     const allLinks = []
 
     for (let page = 1; page <= PAGE_SIZE; page += 1) {
@@ -218,7 +249,7 @@ export default async function handler(req, res) {
     const desiredSet = new Set(ids)
     const existingItems = await listPlaylistItems({
       playlistId: DAILY_PLAYLIST_ID,
-      token: GOOGLE_ACCESS_TOKEN,
+      token: accessToken,
     })
     const retained = new Map()
     const toDelete = []
@@ -244,7 +275,7 @@ export default async function handler(req, res) {
     for (const item of toDelete) {
       await deletePlaylistItem({
         playlistItemId: item.playlistItemId,
-        token: GOOGLE_ACCESS_TOKEN,
+        token: accessToken,
       })
       deleted += 1
     }
@@ -260,7 +291,7 @@ export default async function handler(req, res) {
             playlistId: DAILY_PLAYLIST_ID,
             videoId,
             position: index,
-            token: GOOGLE_ACCESS_TOKEN,
+            token: accessToken,
           })
           updated += 1
         }
@@ -271,7 +302,7 @@ export default async function handler(req, res) {
         playlistId: DAILY_PLAYLIST_ID,
         videoId,
         position: index,
-        token: GOOGLE_ACCESS_TOKEN,
+        token: accessToken,
       })
       added += 1
     }

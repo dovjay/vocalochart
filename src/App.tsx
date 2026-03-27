@@ -96,7 +96,8 @@ function Home() {
 
   useEffect(() => {
     const token = getCookie('google_access_token')
-    if (token) {
+    const refreshToken = getCookie('google_refresh_token')
+    if (token || refreshToken) {
       navigate('/dashboard', { replace: true })
     }
   }, [navigate])
