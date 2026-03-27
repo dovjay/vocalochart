@@ -13,12 +13,50 @@ import { getCookie } from '@/lib/auth'
 import Dashboard from './pages/Dashboard/page'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string
+const OAUTH_CODE_VERIFIER_KEY = 'google_oauth_code_verifier'
+const OAUTH_STATE_KEY = 'google_oauth_state'
 
-function signInWithGoogle() {
+function base64UrlEncode(input: ArrayBuffer | Uint8Array) {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input)
+  let binary = ''
+
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte)
+  }
+
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+function generateCodeVerifier() {
+  const bytes = new Uint8Array(64)
+  crypto.getRandomValues(bytes)
+  return base64UrlEncode(bytes)
+}
+
+async function createCodeChallenge(verifier: string) {
+  const data = new TextEncoder().encode(verifier)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return base64UrlEncode(digest)
+}
+
+function generateState() {
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  return base64UrlEncode(bytes)
+}
+
+async function signInWithGoogle() {
   if (!GOOGLE_CLIENT_ID) {
     alert('Missing VITE_GOOGLE_CLIENT_ID in .env')
     return
   }
+
+  const codeVerifier = generateCodeVerifier()
+  const codeChallenge = await createCodeChallenge(codeVerifier)
+  const state = generateState()
+
+  sessionStorage.setItem(OAUTH_CODE_VERIFIER_KEY, codeVerifier)
+  sessionStorage.setItem(OAUTH_STATE_KEY, state)
 
   const redirectUri = `${window.location.origin}/oauth/callback`
   const scope = encodeURIComponent('openid email profile https://www.googleapis.com/auth/youtube')
@@ -26,8 +64,12 @@ function signInWithGoogle() {
     'https://accounts.google.com/o/oauth2/v2/auth' +
     `?client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    '&response_type=token' +
+    '&response_type=code' +
     `&scope=${scope}` +
+    `&state=${encodeURIComponent(state)}` +
+    `&code_challenge=${encodeURIComponent(codeChallenge)}` +
+    '&code_challenge_method=S256' +
+    '&access_type=offline' +
     '&include_granted_scopes=true' +
     '&prompt=consent'
 
@@ -80,16 +122,76 @@ function OAuthCallback() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.replace('#', ''))
-    const accessToken = hashParams.get('access_token')
+    const runCallback = async () => {
+      const queryParams = new URLSearchParams(window.location.search)
+      const code = queryParams.get('code')
+      const error = queryParams.get('error')
+      const returnedState = queryParams.get('state')
 
-    if (accessToken) {
-      setCookie('google_access_token', accessToken, 60 * 60)
-      navigate('/dashboard', { replace: true })
-      return
+      if (error) {
+        navigate('/', { replace: true })
+        return
+      }
+
+      const expectedState = sessionStorage.getItem(OAUTH_STATE_KEY)
+      sessionStorage.removeItem(OAUTH_STATE_KEY)
+
+      if (!code || !expectedState || expectedState !== returnedState) {
+        navigate('/', { replace: true })
+        return
+      }
+
+      const codeVerifier = sessionStorage.getItem(OAUTH_CODE_VERIFIER_KEY)
+      sessionStorage.removeItem(OAUTH_CODE_VERIFIER_KEY)
+
+      if (!codeVerifier) {
+        navigate('/', { replace: true })
+        return
+      }
+
+      try {
+        const redirectUri = `${window.location.origin}/oauth/callback`
+        const tokenResponse = await fetch('/api/oauth-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            code,
+            code_verifier: codeVerifier,
+            redirect_uri: redirectUri,
+          }),
+        })
+
+        if (!tokenResponse.ok) {
+          navigate('/', { replace: true })
+          return
+        }
+
+        const payload = (await tokenResponse.json()) as {
+          access_token?: string
+          refresh_token?: string
+          expires_in?: number
+        }
+
+        if (!payload.access_token || !payload.expires_in) {
+          navigate('/', { replace: true })
+          return
+        }
+
+        setCookie('google_access_token', payload.access_token, payload.expires_in)
+
+        if (payload.refresh_token) {
+          setCookie('google_refresh_token', payload.refresh_token, 60 * 60 * 24 * 30)
+        }
+
+        navigate('/dashboard', { replace: true })
+      } catch {
+        navigate('/', { replace: true })
+      }
     }
 
-    navigate('/', { replace: true })
+    void runCallback()
   }, [navigate])
 
   return (
