@@ -6,7 +6,7 @@
   "crons": [
     {
       "path": "/api/daily-chart-sync",
-      "schedule": "0 17 * * *"
+      "schedule": "0 2 * * *"
     }
   ]
 }
