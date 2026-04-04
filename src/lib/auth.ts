@@ -11,3 +11,18 @@ export function getCookie(name: string) {
 
   return null
 }
+
+export function setCookie(name: string, value: string, maxAgeSeconds: number) {
+  const parts = [
+    `${encodeURIComponent(name)}=${encodeURIComponent(value)}`,
+    `Max-Age=${maxAgeSeconds}`,
+    'Path=/',
+    'SameSite=Lax',
+  ]
+
+  if (window.location.protocol === 'https:') {
+    parts.push('Secure')
+  }
+
+  document.cookie = parts.join('; ')
+}

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Route, Routes, useNavigate } from 'react-router-dom'
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { RequireAuth } from '@/components/RequireAuth'
-import { getCookie } from '@/lib/auth'
+import { getCookie, setCookie } from '@/lib/auth'
 import Dashboard from './pages/Dashboard/page'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string
@@ -76,31 +76,25 @@ async function signInWithGoogle() {
   window.location.assign(authUrl)
 }
 
-function setCookie(name: string, value: string, maxAgeSeconds: number) {
-  const parts = [
-    `${encodeURIComponent(name)}=${encodeURIComponent(value)}`,
-    `Max-Age=${maxAgeSeconds}`,
-    'Path=/',
-    'SameSite=Lax',
-  ]
-
-  if (window.location.protocol === 'https:') {
-    parts.push('Secure')
-  }
-
-  document.cookie = parts.join('; ')
-}
-
 function Home() {
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const reauth = params.get('reauth') === '1'
+
+    if (reauth) {
+      void signInWithGoogle()
+      return
+    }
+
     const token = getCookie('google_access_token')
     const refreshToken = getCookie('google_refresh_token')
     if (token || refreshToken) {
       navigate('/dashboard', { replace: true })
     }
-  }, [navigate])
+  }, [location.search, navigate])
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center p-6">
