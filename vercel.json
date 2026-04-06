@@ -7,6 +7,10 @@
     {
       "path": "/api/daily-chart-sync",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/weekly-teto-sync",
+      "schedule": "0 0 * * 0"
     }
   ]
 }
