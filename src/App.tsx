@@ -77,7 +77,141 @@ async function signInWithGoogle() {
   window.location.assign(authUrl)
 }
 
+function hasStoredSession() {
+  const token = getCookie('google_access_token')
+  const refreshToken = getCookie('google_refresh_token')
+
+  return Boolean(token || refreshToken)
+}
+
 function Home() {
+  const isSignedIn = hasStoredSession()
+
+  return (
+    <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.18),_transparent_30%),linear-gradient(180deg,_#020617_0%,_#0f172a_52%,_#111827_100%)] text-slate-50">
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-8 sm:px-8 lg:px-10">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.35em] text-emerald-300/80">
+              Vocalochart
+            </p>
+            <p className="mt-2 max-w-2xl text-sm text-slate-300">
+              Public application overview for Google OAuth verification and approved user access.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button asChild variant="outline" className="border-white/20 bg-white/5 text-white hover:bg-white/10">
+              <Link to="/privacy-policy">Privacy Policy</Link>
+            </Button>
+            <Button asChild className="bg-emerald-400 text-slate-950 hover:bg-emerald-300">
+              <Link to={isSignedIn ? '/dashboard' : '/login'}>
+                {isSignedIn ? 'Open dashboard' : 'Authorized user sign in'}
+              </Link>
+            </Button>
+          </div>
+        </header>
+
+        <main className="flex flex-1 items-center py-12 sm:py-16">
+          <div className="grid w-full gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
+            <section className="space-y-8">
+              <div className="space-y-5">
+                <div className="inline-flex items-center rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.3em] text-emerald-200">
+                  Internal YouTube workflow tool
+                </div>
+                <div className="space-y-4">
+                  <h1 className="max-w-4xl text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                    Vocalochart helps authorized me manage YouTube chart and playlist operations.
+                  </h1>
+                  <p className="max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">
+                    The application is used by approved internal users to review playlist data, create or
+                    update YouTube playlists, and run chart synchronization workflows tied to a configured
+                    channel.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Card className="border-white/10 bg-white/5 shadow-2xl shadow-slate-950/30 backdrop-blur">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-white">Playlist management</CardTitle>
+                    <CardDescription className="text-slate-300">
+                      Review existing YouTube playlists and create new ones for chart publishing workflows.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+
+                <Card className="border-white/10 bg-white/5 shadow-2xl shadow-slate-950/30 backdrop-blur">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-white">Chart sync operations</CardTitle>
+                    <CardDescription className="text-slate-300">
+                      Trigger scheduled or manual sync jobs that support daily and weekly chart updates.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+
+                <Card className="border-white/10 bg-white/5 shadow-2xl shadow-slate-950/30 backdrop-blur">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-white">Restricted access</CardTitle>
+                    <CardDescription className="text-slate-300">
+                      Google sign-in is limited to approved internal users who need access to the tool.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+            </section>
+
+            <Card className="border-white/10 bg-slate-950/70 shadow-2xl shadow-slate-950/40 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-2xl text-white">Application details</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Information visible without login for verification and compliance review.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6 text-sm leading-7 text-slate-200">
+                <div>
+                  <p className="font-medium text-white">Purpose</p>
+                  <p className="mt-2 text-slate-300">
+                    Vocalochart is a private operations app for maintaining YouTube playlists and chart data.
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-medium text-white">Google data usage</p>
+                  <p className="mt-2 text-slate-300">
+                    After sign-in, the app uses Google account and YouTube permissions only to authenticate
+                    users and perform playlist-related workflow actions.
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-medium text-white">Access model</p>
+                  <p className="mt-2 text-slate-300">
+                    The homepage is public. Operational features stay behind a separate sign-in page and a
+                    protected dashboard.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <Button asChild className="bg-emerald-400 text-slate-950 hover:bg-emerald-300">
+                    <Link to={isSignedIn ? '/dashboard' : '/login'}>
+                      {isSignedIn ? 'Go to dashboard' : 'Go to sign in'}
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className="text-slate-200 hover:bg-white/10 hover:text-white">
+                    <Link to="/terms-of-service">Terms of Service</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    </div>
+  )
+}
+
+function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -102,9 +236,9 @@ function Home() {
       <div className="w-full max-w-md space-y-4">
         <Card className="border-slate-800 bg-slate-900/70 shadow-xl">
           <CardHeader>
-            <CardTitle>Welcome to Vocalochart</CardTitle>
+            <CardTitle>Sign in to Vocalochart</CardTitle>
             <CardDescription>
-              Sign in to access internal YouTube playlist and chart workflows.
+              Authorized users can continue to the protected dashboard for YouTube playlist and chart workflows.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -112,12 +246,16 @@ function Home() {
               Sign in with Google
             </Button>
             <p className="text-xs leading-6 text-slate-400">
-              Vocalochart is a restricted internal-use application.
+              The public application overview is available on the homepage. This page is only for approved user access.
             </p>
           </CardContent>
         </Card>
 
         <div className="flex items-center justify-center gap-4 text-xs text-slate-400">
+          <Link className="underline underline-offset-4 hover:text-white" to="/">
+            Homepage
+          </Link>
+          <span aria-hidden="true">•</span>
           <Link className="underline underline-offset-4 hover:text-white" to="/privacy-policy">
             Privacy Policy
           </Link>
@@ -228,6 +366,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/login" element={<LoginPage />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/terms-of-service" element={<TermsOfServicePage />} />

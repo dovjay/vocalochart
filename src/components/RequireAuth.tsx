@@ -85,7 +85,7 @@ export function RequireAuth({ children }: RequireAuthProps) {
   }, [])
 
   if (status === 'reauth') {
-    return <Navigate to="/?reauth=1" replace state={{ from: location.pathname }} />
+    return <Navigate to="/login?reauth=1" replace state={{ from: location.pathname }} />
   }
 
   if (status === 'checking') {
@@ -93,7 +93,7 @@ export function RequireAuth({ children }: RequireAuthProps) {
   }
 
   if (status === 'unauth') {
-    return <Navigate to="/" replace state={{ from: location.pathname }} />
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
 
   return <>{children}</>

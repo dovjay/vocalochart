@@ -18,7 +18,7 @@ function LegalShell({ title, updatedAt, children }: LegalPageProps) {
             <p className="mt-2 text-sm text-slate-400">Last updated {updatedAt}</p>
           </div>
           <Link className="text-sm text-slate-300 underline underline-offset-4 hover:text-white" to="/">
-            Back to sign in
+            Back to homepage
           </Link>
         </div>
 
