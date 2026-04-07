@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -11,6 +11,7 @@ import {
 import { RequireAuth } from '@/components/RequireAuth'
 import { getCookie, setCookie } from '@/lib/auth'
 import Dashboard from './pages/Dashboard/page'
+import { PrivacyPolicyPage, TermsOfServicePage } from './pages/Legal/page'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string
 const OAUTH_CODE_VERIFIER_KEY = 'google_oauth_code_verifier'
@@ -98,17 +99,34 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center p-6">
-      <Card className="w-full max-w-md border-slate-800 bg-slate-900/70 shadow-xl">
-        <CardHeader>
-          <CardTitle>Welcome to Vocalochart</CardTitle>
-          <CardDescription>Sign in to view your YouTube playlists.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={signInWithGoogle} className="w-full">
-            Sign in with Google
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-md space-y-4">
+        <Card className="border-slate-800 bg-slate-900/70 shadow-xl">
+          <CardHeader>
+            <CardTitle>Welcome to Vocalochart</CardTitle>
+            <CardDescription>
+              Sign in to access internal YouTube playlist and chart workflows.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button onClick={signInWithGoogle} className="w-full">
+              Sign in with Google
+            </Button>
+            <p className="text-xs leading-6 text-slate-400">
+              Vocalochart is a restricted internal-use application.
+            </p>
+          </CardContent>
+        </Card>
+
+        <div className="flex items-center justify-center gap-4 text-xs text-slate-400">
+          <Link className="underline underline-offset-4 hover:text-white" to="/privacy-policy">
+            Privacy Policy
+          </Link>
+          <span aria-hidden="true">•</span>
+          <Link className="underline underline-offset-4 hover:text-white" to="/terms-of-service">
+            Terms of Service
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }
@@ -211,6 +229,8 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms-of-service" element={<TermsOfServicePage />} />
       <Route
         path="/dashboard"
         element={
